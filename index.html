@@ -14,9 +14,10 @@
     <input type="text" class="insertStart">
     <span>To</span>
     <input type="text" class="insertEnd">    
-    <button class="startToEnd">连续插入</button>    
+    <button class="startToEnd">连续插入</button>   
+    <button class="deleteAll">清空</button> 
   </div>
-  <canvas id="canvas">
+  <canvas style="border: 1px solid #777" id="canvas">
     
   </canvas>
   <script>
@@ -117,8 +118,10 @@
     var startToEnd = document.querySelector(".startToEnd");
     var start = document.querySelector(".insertStart")
     var end = document.querySelector(".insertEnd");
+    var delAll = document.querySelector(".deleteAll");
     insertBtn.addEventListener("click", (e) => {
       var value = insertInput.value;
+      if (value == "") return;
       insert(value);
       insertInput.value = "";
       insertInput.focus();
@@ -132,11 +135,10 @@
     startToEnd.addEventListener("click",(e) => {
       var s = start.value;
       var e = end.value;
-      if (s == null || e == null) return;
+      if (s == "" || e == "") return;
       if (e < s) return ;
       for (let i = s; i <= e;i++) {
         tree.insert(i);
-        console.log("insert")
       }
       init();
       draw();
@@ -144,6 +146,14 @@
       end.value = "";
       start.focus();
     })
+    delAll.addEventListener("click", (e) => {
+      tree.root = null;
+      init();
+      draw();
+    })
+    start.value = 1;
+    end.value = 30;
+    startToEnd.click();
   </script>
 </body>
 </html>
