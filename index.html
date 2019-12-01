@@ -3,10 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <title>Document</title>
-   <script src="./myRedBlackTree.js"></script>
+  <script src="./myRedBlackTree.js"></script>
+  <script src="https://unpkg.com/lodash"></script>  
+  <style>
+    div.tree {
+      display: flex;
+      flex-wrap: wrap;/*span需要独占一行，所以此flex布局必须要折行显示*/
+      align-items: flex-start;
+    }
+    .red {
+      color: red;
+    }
+    .black {
+      color: black;
+    }
+    .tree > .tree {
+      width: 50%;
+    }
+    div.tree > span {
+      width: 100%;
+      text-align: center;
+      padding-bottom: 3em;
+      background-image: url(both.svg);
+      background-repeat: no-repeat;
+      background-size: 100% calc(100% - 0);
+      background-position: 0 0;
+    }
+    /*没有后代的子树不再展示连线和多余空间*/
+    div.tree > span:only-child {
+      background-image: none;
+      padding-bottom: 0;
+    }
+    /*右/右子树自动往左/右偏*/
+    div.left {
+      margin-right: auto;
+    }
+    div.right {
+      margin-left: auto;
+    }
+    /*只有单边子树的元素，让此单边子树占用90%的空间*/
+    div.only-has-left > div.tree {
+      width: 90%;
+      margin-right: auto;
+    }
+    div.only-has-right > div.tree {
+      width: 90%;
+      margin-left: auto;
+    }
+    /*只有单边子树的元素只显示单边的连线*/
+    div.only-has-left > span {
+      background-image: url(left.svg);
+    }
+    div.only-has-right > span {
+      background-image: url(right.svg);
+    }   
+  </style>
 </head>
 <body>
-  <div>
+    <div>
     <input type="text" class="insertInput">
     <button class="insertBtn">插入</button>
     <input type="text" class="deleteInput">
@@ -16,144 +70,119 @@
     <input type="text" class="insertEnd">    
     <button class="startToEnd">连续插入</button>   
     <button class="deleteAll">清空</button> 
+    <button onclick="startRandom()">开始随机</button>
+    <button onclick="stopRandom()">结束随机</button>
   </div>
-  <canvas style="border: 1px solid #777" id="canvas">
+  <div class="container" style="position: relative;">
     
-  </canvas>
-  <script>
+  </div>
+<script type="text/javascript">
 
-    var treeH = 0;
-    let RADIUS = 6;
-    let SPACE =  6;
-    let width;
-    let height;
-    let tree = new myRedBlackTree();
-    let i = 0;
 
-    function init() {
-      getHeight(tree.root,0);
-      width = 2 ** (treeH - 1 ) * 2 * (RADIUS + SPACE);
-      height = treeH * 100;      
+
+  let tree = new myRedBlackTree();
+
+  let container = document.querySelector(".container");
+
+  function insert(value) {
+    tree.insert(value);
+    render();
+  }
+
+  function deleteNode(value) {
+    tree.delete(value);
+    render();
+  }
+
+  function render() {
+    container.innerHTML = travelTree(tree.root);
+  }
+
+function travelTree(root) {
+  if (root) {
+    let onlyLeft  = (root.left && !root.right)
+    let onlyRight = (!root.left && root.right)
+    let both = root.left && root.right
+    let noSubTree = !root.left && !root.right
+    return `
+      <div class="
+        tree 
+        ${both?'both':''}
+        ${noSubTree?'no-sub-tree':''}
+        ${onlyLeft?'only-has-left':''}
+        ${onlyRight?'only-has-right':''}
+        ${root.color? 'red':'black'}
+      ">
+        <span>${root.value}</span>
+        ${travelTree(root.left)}
+        ${travelTree(root.right)}
+      </div>
+    `
+  } else {return''}
+}
+  render();
+
+
+
+  var insertInput = document.querySelector(".insertInput");
+  var deleteInput = document.querySelector(".deleteInput");
+  var insertBtn = document.querySelector(".insertBtn");
+  var deleteBtn = document.querySelector(".deleteBtn");
+  var startToEnd = document.querySelector(".startToEnd");
+  var start = document.querySelector(".insertStart")
+  var end = document.querySelector(".insertEnd");
+  var delAll = document.querySelector(".deleteAll");
+  insertBtn.addEventListener("click", (e) => {
+    var value = insertInput.value;
+    if (value == "") return;
+    insert(value);
+    insertInput.value = "";
+    insertInput.focus();
+  })
+  deleteBtn.addEventListener("click", (e) => {
+    var value = deleteInput.value;
+    deleteNode(value);
+    deleteInput.value = "";
+    deleteInput.focus();
+  })    
+  startToEnd.addEventListener("click",(e) => {
+    if (s == "" || e == "") {
+
+      return;
     }
-    init();
-    function insert(value) {
-      tree.insert(value);
-      init();
-      draw();
+    var s = +start.value;
+    var e = +end.value;
+    if (e - s < 0) {
+      return ;
     }
-
-    function del(value) {
-      tree.delete(value);
-      init();
-      draw();
+    for (let i = s; i <= e;i++) {
+      tree.insert(i);
     }
-    
-    function getHeight(root,height) {
-      if (root) {
-        height = height + 1;
-        if (height > treeH) {
-          treeH = height;
-        }
-        getHeight(root.left, height);
-        getHeight(root.right, height)
-      }
-    }    
+    render();
+    start.value = "";
+    end.value = "";
+    start.focus();
+  })
+  delAll.addEventListener("click", (e) => {
+    tree.root = null;
+    render();
+  })
+  start.value = 1;
+  end.value = 30;
+  startToEnd.click();
 
-    function draw() {
-      const canvas = document.querySelector("#canvas");
-      const ctx = canvas.getContext("2d");
-      canvas.width = width;
-      canvas.height = height;
-      ctx.font = "bold 6px";
-      ctx.textBaseline = "middle";
-      ctx.textAlign = "center"
-      travelTree(tree.root, 0, canvas.width / 2, 50);
-      ctx.stroke();
-      ctx.closePath();
-      function travelTree(root, level,startX, startY,direction) {
-        if (root) {
-          if (level === 0) {
-            ctx.beginPath();
-            ctx.moveTo(startX + RADIUS, startY);
-            ctx.arc(startX, startY, RADIUS, 0, Math.PI * 2, true);
-            ctx.fillStyle= "black"
-            ctx.fillText(root.value,startX, startY);
-            travelTree(root.left, level + 1, startX, startY, "left");
-            travelTree(root.right, level + 1, startX, startY, "right");
-            return;
-          }
-          if (direction === "left") {
-            ctx.moveTo(startX , startY + RADIUS );
+  function random() {
+    tree.insert(_.random(0,1000));
+    render();
+  };
+  let interval;
+  function startRandom() {
+    interval = setInterval(random, 800);
+  }
 
-            startX = startX - width / 4 ** level - SPACE ;
-            startY = startY + 100;
-
-            ctx.lineTo(startX , startY - RADIUS);
-            ctx.moveTo(startX + RADIUS, startY);
-            ctx.arc(startX, startY, RADIUS, 0, Math.PI * 2, true);
-            ctx.fillStyle = `${root.color ? "red" : "black"}`;
-            ctx.fillText(root.value, startX, startY);
-          } else {
-            ctx.moveTo(startX, startY + RADIUS);
-            
-            startX = startX + width / 4 ** level + SPACE;
-            startY = startY + 100;
-            ctx.lineTo(startX, startY - RADIUS);
-            ctx.moveTo(startX + RADIUS, startY);
-            ctx.arc(startX, startY, RADIUS, 0, Math.PI * 2, true);
-            ctx.fillStyle = `${root.color ? "red" : "black"}`;
-            ctx.fillText(root.value, startX, startY);        
-          }
-          travelTree(root.left, level + 1, startX, startY, "left");
-          travelTree(root.right, level + 1, startX, startY, "right");
-        }
-      }
-    }
-    draw();
-
-    var insertInput = document.querySelector(".insertInput");
-    var deleteInput = document.querySelector(".deleteInput");
-    var insertBtn = document.querySelector(".insertBtn");
-    var deleteBtn = document.querySelector(".deleteBtn");
-    var startToEnd = document.querySelector(".startToEnd");
-    var start = document.querySelector(".insertStart")
-    var end = document.querySelector(".insertEnd");
-    var delAll = document.querySelector(".deleteAll");
-    insertBtn.addEventListener("click", (e) => {
-      var value = insertInput.value;
-      if (value == "") return;
-      insert(value);
-      insertInput.value = "";
-      insertInput.focus();
-    })
-    deleteBtn.addEventListener("click", (e) => {
-      var value = deleteInput.value;
-      del(value);
-      deleteInput.value = "";
-      deleteInput.focus();
-    })    
-    startToEnd.addEventListener("click",(e) => {
-      var s = start.value;
-      var e = end.value;
-      if (s == "" || e == "") return;
-      if (e < s) return ;
-      for (let i = s; i <= e;i++) {
-        tree.insert(i);
-      }
-      init();
-      draw();
-      start.value = "";
-      end.value = "";
-      start.focus();
-    })
-    delAll.addEventListener("click", (e) => {
-      tree.root = null;
-      init();
-      draw();
-    })
-    start.value = 1;
-    end.value = 30;
-    startToEnd.click();
-  </script>
+  function stopRandom() {
+    clearInterval(interval);
+  }
+</script>
 </body>
 </html>
