@@ -4,7 +4,7 @@
 
 DOM + CSS实现的可视化界面：[可视化界面](https://tttinkl.github.io/RedBlackTreeByJS/)
 
-<img src="/Users/tttinkl/Desktop/DDDDD/damiaoClass/miao/myDataStructure/image.png" style="zoom:50%;" />
+<img src="./image.png" style="zoom:50%;" />
 
 
 
